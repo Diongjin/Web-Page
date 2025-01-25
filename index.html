@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>운동 용품 대여 플랫폼</title>
-    
+
     <!-- 외부 CSS 파일 연결 -->
     <link rel="stylesheet" href="health.css">
 </head>
@@ -14,27 +14,96 @@
     <!-- React 및 Babel 연결 -->
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@5.1.0/umd/react-router-dom.min.js"></script> <!-- v5 버전 사용 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- React 앱 코드 -->
     <script type="text/babel">
-        // 운동 용품 대여 플랫폼 컴포넌트
+        // React Router 및 컴포넌트 불러오기
+        const { BrowserRouter: Router, Route, Switch, Link } = ReactRouterDOM;
+
+        // 메인 페이지 컴포넌트
         const App = () => {
             const [items, setItems] = React.useState([]); // 등록된 용품 목록
-            const [itemName, setItemName] = React.useState(""); // 새로 등록할 용품 이름
-            const [searchQuery, setSearchQuery] = React.useState(""); // 검색어
 
-            // 용품 등록 핸들러
+            // 용품 등록 페이지로부터 아이템을 추가하는 함수
+            const handleAddItem = (newItem) => {
+                setItems([...items, newItem]);
+            };
+
+            return (
+                <Router>
+                    <div className="app">
+                        <nav>
+                            <ul>
+                                <li><Link to="/">홈</Link></li>
+                                <li><Link to="/add-item">용품 등록</Link></li>
+                                <li><Link to="/search-items">용품 검색</Link></li>
+                            </ul>
+                        </nav>
+
+                        <Switch>
+                            <Route path="/" exact>
+                                <h1>운동 용품 대여 플랫폼</h1>
+                                <h2>등록된 운동 용품</h2>
+                                <ul>
+                                    {items.length > 0 ? (
+                                        items.map((item, index) => (
+                                            <li key={index}>{item}</li>
+                                        ))
+                                    ) : (
+                                        <p>등록된 운동 용품이 없습니다.</p>
+                                    )}
+                                </ul>
+                            </Route>
+
+                            <Route path="/add-item">
+                                <AddItemPage onAddItem={handleAddItem} />
+                            </Route>
+                            <Route path="/search-items" component={SearchItemsPage} />
+                        </Switch>
+                    </div>
+                </Router>
+            );
+        };
+
+        // 용품 등록 페이지 컴포넌트
+        const AddItemPage = ({ onAddItem }) => {
+            const [itemName, setItemName] = React.useState(""); // 새로 등록할 용품 이름
+
             const handleAddItem = () => {
                 if (itemName.trim() === "") {
                     alert("운동 용품 이름을 입력하세요!");
                     return;
                 }
-                setItems([...items, itemName]); // 목록에 추가
+                onAddItem(itemName); // 아이템을 부모 컴포넌트로 전달하여 추가
                 setItemName(""); // 입력 필드 초기화
             };
 
-            // 검색 핸들러
+            return (
+                <div className="add-item-page">
+                    <h1>운동 용품 등록</h1>
+                    <input
+                        type="text"
+                        placeholder="운동 용품 이름을 입력하세요"
+                        value={itemName}
+                        onChange={(e) => setItemName(e.target.value)}
+                    />
+                    <button onClick={handleAddItem}>등록</button>
+                </div>
+            );
+        };
+
+        // 용품 검색 페이지 컴포넌트
+        const SearchItemsPage = () => {
+            const [items] = React.useState([
+                "헬스 장비",
+                "자전거",
+                "요가 매트",
+                "배드민턴 셋트",
+            ]);
+            const [searchQuery, setSearchQuery] = React.useState(""); // 검색어
+
             const handleSearch = (e) => {
                 setSearchQuery(e.target.value); // 검색어 상태 업데이트
             };
@@ -45,33 +114,15 @@
             );
 
             return (
-                <div style={{ padding: '20px' }}>
-                    <h1>운동 용품 대여 플랫폼</h1>
-
-                    {/* 검색 섹션 */}
-                    <div className="search-section">
-                        <input
-                            type="text"
-                            placeholder="용품을 검색하세요"
-                            value={searchQuery}
-                            onChange={handleSearch}
-                            className="search-input"
-                        />
-                    </div>
-
-                    {/* 용품 등록 섹션 */}
-                    <div className="add-item-section">
-                        <input
-                            type="text"
-                            placeholder="운동 용품 이름을 입력하세요"
-                            value={itemName}
-                            onChange={(e) => setItemName(e.target.value)}
-                        />
-                        <button onClick={handleAddItem}>등록</button>
-                    </div>
-
-                    {/* 등록된 용품 목록 */}
-                    <h2>등록된 운동 용품</h2>
+                <div className="search-item-page">
+                    <h1>운동 용품 검색</h1>
+                    <input
+                        type="text"
+                        placeholder="용품을 검색하세요"
+                        value={searchQuery}
+                        onChange={handleSearch}
+                    />
+                    <h2>검색된 운동 용품</h2>
                     {filteredItems.length > 0 ? (
                         <ul>
                             {filteredItems.map((item, index) => (
@@ -79,7 +130,7 @@
                             ))}
                         </ul>
                     ) : (
-                        <p>등록된 운동 용품이 없습니다.</p>
+                        <p>검색된 용품이 없습니다.</p>
                     )}
                 </div>
             );
