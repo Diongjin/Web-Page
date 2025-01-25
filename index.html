@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>운동 용품 대여 플랫폼</title>
-
     <!-- 외부 CSS 파일 연결 -->
     <link rel="stylesheet" href="health.css">
 </head>
@@ -15,128 +14,125 @@
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/react-router-dom@5.1.0/umd/react-router-dom.min.js"></script> <!-- v5 버전 사용 -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script> <!-- axios 추가 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- React 앱 코드 -->
+    <script type="module" src="src/index.js"></script>
     <script type="text/babel">
-        // React Router 및 컴포넌트 불러오기
         const { BrowserRouter: Router, Route, Switch, Link } = ReactRouterDOM;
 
-        // 메인 페이지 컴포넌트
+        // 로그인 및 회원가입 처리
         const App = () => {
-            const [items, setItems] = React.useState([]); // 등록된 용품 목록
+    const [isAuthenticated, setIsAuthenticated] = React.useState(localStorage.getItem('token') ? true : false);
+    const [items, setItems] = React.useState([]);
+    const [searchQuery, setSearchQuery] = React.useState("");
+    const [itemName, setItemName] = React.useState("");
 
-            // 용품 등록 페이지로부터 아이템을 추가하는 함수
-            const handleAddItem = (newItem) => {
-                setItems([...items, newItem]);
-            };
+    const handleLogin = async (username, password) => {
+        try {
+            const response = await axios.post('http://localhost:5000/login', { username, password });
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                setIsAuthenticated(true);
+            }
+        } catch (error) {
+            alert("로그인에 실패했습니다. 다시 시도해주세요.");
+        }
+    };
 
-            return (
-                <Router>
-                    <div className="app">
-                        <nav>
-                            <ul>
-                                <li><Link to="/">홈</Link></li>
-                                <li><Link to="/add-item">용품 등록</Link></li>
-                                <li><Link to="/search-items">용품 검색</Link></li>
-                            </ul>
-                        </nav>
+    const handleSignup = async (username, password) => {
+        try {
+            await axios.post('http://localhost:5000/signup', { username, password });
+            alert('회원가입이 완료되었습니다.');
+        } catch (error) {
+            alert("회원가입에 실패했습니다. 다시 시도해주세요.");
+        }
+    };
 
-                        <Switch>
-                            <Route path="/" exact>
-                                <h1>운동 용품 대여 플랫폼</h1>
-                                <h2>등록된 운동 용품</h2>
-                                <ul>
-                                    {items.length > 0 ? (
-                                        items.map((item, index) => (
-                                            <li key={index}>{item}</li>
-                                        ))
-                                    ) : (
-                                        <p>등록된 운동 용품이 없습니다.</p>
-                                    )}
-                                </ul>
-                            </Route>
+    const handleAddItem = () => {
+        if (!isAuthenticated) {
+            alert('로그인 후 용품을 등록하세요.');
+            return;
+        }
+        if (!itemName) {
+            alert('용품 이름을 입력하세요.');
+            return;
+        }
+        axios.post('http://localhost:5000/add-item', { name: itemName, token: localStorage.getItem('token') })
+            .then(() => {
+                setItems((prevItems) => [...prevItems, itemName]);
+                setItemName('');
+            });
+    };
 
-                            <Route path="/add-item">
-                                <AddItemPage onAddItem={handleAddItem} />
-                            </Route>
-                            <Route path="/search-items" component={SearchItemsPage} />
-                        </Switch>
-                    </div>
-                </Router>
-            );
-        };
+    const handleSearch = (e) => {
+        setSearchQuery(e.target.value);
+    };
 
-        // 용품 등록 페이지 컴포넌트
-        const AddItemPage = ({ onAddItem }) => {
-            const [itemName, setItemName] = React.useState(""); // 새로 등록할 용품 이름
+    const filteredItems = items.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
 
-            const handleAddItem = () => {
-                if (itemName.trim() === "") {
-                    alert("운동 용품 이름을 입력하세요!");
-                    return;
-                }
-                onAddItem(itemName); // 아이템을 부모 컴포넌트로 전달하여 추가
-                setItemName(""); // 입력 필드 초기화
-            };
+    return (
+        <Router>
+            <div className="app">
+                <nav>
+                    <ul>
+                        <li><Link to="/">홈</Link></li>
+                        <li><Link to="/add-item">용품 등록</Link></li>
+                        <li><Link to="/search-items">용품 검색</Link></li>
+                        <li><Link to="/login">로그인</Link></li>
+                        <li><Link to="/signup">회원가입</Link></li>
+                        {isAuthenticated && <li><button onClick={() => { localStorage.removeItem('token'); setIsAuthenticated(false); }}>로그아웃</button></li>}
+                    </ul>
+                </nav>
 
-            return (
-                <div className="add-item-page">
-                    <h1>운동 용품 등록</h1>
-                    <input
-                        type="text"
-                        placeholder="운동 용품 이름을 입력하세요"
-                        value={itemName}
-                        onChange={(e) => setItemName(e.target.value)}
-                    />
-                    <button onClick={handleAddItem}>등록</button>
-                </div>
-            );
-        };
-
-        // 용품 검색 페이지 컴포넌트
-        const SearchItemsPage = () => {
-            const [items] = React.useState([
-                "헬스 장비",
-                "자전거",
-                "요가 매트",
-                "배드민턴 셋트",
-            ]);
-            const [searchQuery, setSearchQuery] = React.useState(""); // 검색어
-
-            const handleSearch = (e) => {
-                setSearchQuery(e.target.value); // 검색어 상태 업데이트
-            };
-
-            // 검색된 용품만 필터링
-            const filteredItems = items.filter((item) =>
-                item.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-
-            return (
-                <div className="search-item-page">
-                    <h1>운동 용품 검색</h1>
-                    <input
-                        type="text"
-                        placeholder="용품을 검색하세요"
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    />
-                    <h2>검색된 운동 용품</h2>
-                    {filteredItems.length > 0 ? (
+                <Switch>
+                    <Route path="/" exact>
+                        <h1>운동 용품 대여 플랫폼</h1>
+                        <h2>등록된 운동 용품</h2>
                         <ul>
-                            {filteredItems.map((item, index) => (
-                                <li key={index}>{item}</li>
-                            ))}
+                            {filteredItems.length > 0 ? (
+                                filteredItems.map((item, index) => <li key={index}>{item}</li>)
+                            ) : (
+                                <p>등록된 운동 용품이 없습니다.</p>
+                            )}
                         </ul>
-                    ) : (
-                        <p>검색된 용품이 없습니다.</p>
-                    )}
-                </div>
-            );
-        };
+                    </Route>
+                    <Route path="/add-item">
+                        {isAuthenticated ? (
+                            <div>
+                                <h1>용품 등록</h1>
+                                <input type="text" value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="용품 이름" />
+                                <button onClick={handleAddItem}>등록</button>
+                            </div>
+                        ) : (
+                            <p>로그인 후 용품을 등록할 수 있습니다.</p>
+                        )}
+                    </Route>
+                    <Route path="/search-items">
+                        <div>
+                            <h1>용품 검색</h1>
+                            <input type="text" value={searchQuery} onChange={handleSearch} placeholder="검색어 입력" />
+                            <ul>
+                                {filteredItems.length > 0 ? (
+                                    filteredItems.map((item, index) => <li key={index}>{item}</li>)
+                                ) : (
+                                    <p>검색된 용품이 없습니다.</p>
+                                )}
+                            </ul>
+                        </div>
+                    </Route>
+                    <Route path="/login">
+                        <Login onLogin={setIsAuthenticated} />
+                    </Route>
+                    <Route path="/signup">
+                        <Signup />
+                    </Route>
+                </Switch>
+            </div>
+        </Router>
+    );
+};
 
-        // React 앱 렌더링
+
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
