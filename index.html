@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>운동 용품 대여 플랫폼</title>
+    
+    <!-- 외부 CSS 파일 연결 -->
+    <link rel="stylesheet" href="health.css">
 </head>
 <body>
     <div id="root"></div>
@@ -19,6 +22,7 @@
         const App = () => {
             const [items, setItems] = React.useState([]); // 등록된 용품 목록
             const [itemName, setItemName] = React.useState(""); // 새로 등록할 용품 이름
+            const [searchQuery, setSearchQuery] = React.useState(""); // 검색어
 
             // 용품 등록 핸들러
             const handleAddItem = () => {
@@ -30,33 +34,48 @@
                 setItemName(""); // 입력 필드 초기화
             };
 
+            // 검색 핸들러
+            const handleSearch = (e) => {
+                setSearchQuery(e.target.value); // 검색어 상태 업데이트
+            };
+
+            // 검색된 용품만 필터링
+            const filteredItems = items.filter((item) =>
+                item.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
             return (
-                <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ padding: '20px' }}>
                     <h1>운동 용품 대여 플랫폼</h1>
 
+                    {/* 검색 섹션 */}
+                    <div className="search-section">
+                        <input
+                            type="text"
+                            placeholder="용품을 검색하세요"
+                            value={searchQuery}
+                            onChange={handleSearch}
+                            className="search-input"
+                        />
+                    </div>
+
                     {/* 용품 등록 섹션 */}
-                    <div style={{ marginBottom: '20px' }}>
+                    <div className="add-item-section">
                         <input
                             type="text"
                             placeholder="운동 용품 이름을 입력하세요"
                             value={itemName}
                             onChange={(e) => setItemName(e.target.value)}
-                            style={{ padding: '10px', fontSize: '16px', marginRight: '10px' }}
                         />
-                        <button
-                            onClick={handleAddItem}
-                            style={{ padding: '10px 15px', fontSize: '16px', cursor: 'pointer' }}
-                        >
-                            등록
-                        </button>
+                        <button onClick={handleAddItem}>등록</button>
                     </div>
 
                     {/* 등록된 용품 목록 */}
                     <h2>등록된 운동 용품</h2>
-                    {items.length > 0 ? (
+                    {filteredItems.length > 0 ? (
                         <ul>
-                            {items.map((item, index) => (
-                                <li key={index} style={{ marginBottom: '5px' }}>{item}</li>
+                            {filteredItems.map((item, index) => (
+                                <li key={index}>{item}</li>
                             ))}
                         </ul>
                     ) : (
